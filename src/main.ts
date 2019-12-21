@@ -5,7 +5,7 @@ import * as path from 'path';
 
 const glob = require("glob")
 
-async function get_release_by_tag(tag: string, octokit: any, context: any): Promise<any> {
+async function get_release_by_tag(tag: string, draft: string, octokit: any, context: any): Promise<any> {
     try {
         core.debug(`Getting release by tag ${tag}.`);
         return await octokit.repos.getReleaseByTag({
@@ -19,6 +19,7 @@ async function get_release_by_tag(tag: string, octokit: any, context: any): Prom
             return await octokit.repos.createRelease({
                 ...context.repo,
                 tag_name: tag,
+                draft: draft === 'true'
             })
         } else {
             throw error;
@@ -73,12 +74,13 @@ async function run() {
         const token = core.getInput('repo_token', { required: true });
         const file = core.getInput('file', { required: true });
         const file_glob = core.getInput('file_glob');
+        const draft = core.getInput('draft')
         const tag = core.getInput('tag', { required: true }).replace("refs/tags/", "");
         const overwrite = core.getInput('overwrite');
 
         const octokit = new github.GitHub(token);
         const context = github.context;
-        const release = await get_release_by_tag(tag, octokit, context);
+        const release = await get_release_by_tag(tag, draft, octokit, context);
 
         if (file_glob === "true") {
             const files = glob.sync(file);
